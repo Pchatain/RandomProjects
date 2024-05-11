@@ -1,13 +1,15 @@
 import fire
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.image as mpimg
 
-def plot(image_path, positions, driver, people, weights):
+def plot(image_path, positions, driver, people, weights, name=""):
     car_image = mpimg.imread(image_path)
+    if weights is None:
+        weights = [1] * len(people)
     weights = [w / sum(weights) for w in weights]
-    seats = np.arange(1, len(people) + 1)
 
     # Randomly assign seats
     people = list(np.random.choice(people, len(people), replace=False, p=weights))
@@ -24,7 +26,15 @@ def plot(image_path, positions, driver, people, weights):
     ax.set_xlim(-0.5, 2.5)
     ax.set_ylim(-0.5, 3.5)
     ax.axis('off')  # Hide axes
-    plt.show()
+
+    day = time.strftime("%Y-%m-%d")
+    hour = int(time.strftime("%H"))
+    if hour < 12:
+        hour = "AM"
+    else:
+        hour = "PM"
+    file_name = f"seating_chart_{day}_{hour}" + name  + ".png"
+    plt.savefig(file_name)
 
 def van():
     print("Van")
@@ -44,9 +54,29 @@ def van():
     people = front_seat_princesses + normal_people + back_seat_kings
     plot(image_path, positions, driver, people, weights)
 
+def cars():
+    print("Cars")
+    image_path = "car.png"
+
+    driver = ["Chris"]
+    all_people = ["Henry", "Nick"] + ["Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"] + ["Gus", "Alex"]
+    positions = [(0.4, 2.1), (1.5, 2.1),  # Front row
+                (0.3, 1.35), (0.9, 1.35), (1.5, 1.35),  # Middle row
+    ]
+    i = 0
+    while all_people:
+        people_i = np.random.choice(all_people, min(4, len(all_people)), replace=False)
+        if len(people_i) < 4:
+            people_i = list(people_i) + [None] * (4 - len(people_i))
+        plot(image_path, positions, driver, people_i, None, str(i))
+        i += 1
+        all_people = [p for p in all_people if p not in people_i]
+
 def main(vehicle="van"):
     if vehicle == "van":
         van()
+    elif vehicle == "cars":
+        cars()
     else:
         raise ValueError(f"Invalid vehicle `{vehicle}`")
 
