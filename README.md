@@ -1,0 +1,1 @@
+Randomized Seat assignments.
