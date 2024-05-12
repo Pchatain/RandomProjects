@@ -43,7 +43,7 @@ def van():
     driver = ["Chris"]
     front_seat_princesses = ["Henry", "Nick"]
     normal_people = ["Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"]
-    back_seat_kings = ["Gus", "Alex"]
+    back_seat_kings = ["Gus", "Hedge"]
 
     weights = [25] * 2 + [8] * len(normal_people) + [1] * 2
 
@@ -59,7 +59,8 @@ def cars():
     image_path = "car.png"
 
     driver = ["Chris"]
-    all_people = ["Henry", "Nick"] + ["Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"] + ["Gus", "Alex"]
+    # spares =  ["Gus", "Hedge"]
+    all_people = ["Henry", "Nick"] + ["Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"]
     positions = [(0.4, 2.1), (1.5, 2.1),  # Front row
                 (0.3, 1.35), (0.9, 1.35), (1.5, 1.35),  # Middle row
     ]
