@@ -46,6 +46,10 @@ def van():
     back_seat_kings = ["Gus", "Hedge"]
 
     weights = [25] * 2 + [8] * len(normal_people) + [1] * 2
+    probs = [w / sum(weights) for w in weights]
+    for prob in probs:
+        print(f"{prob:.2f}", end=", ")
+    print()
 
     positions = [(0.4, 2.1), (1, 2.1), (1.5, 2.1),  # Front row
                 (0.3, 1.35), (0.9, 1.35), (1.5, 1.35),  # Middle row
