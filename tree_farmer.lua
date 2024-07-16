@@ -1,25 +1,52 @@
 -- treeFarmer.lua
 local args = {...}
-local FARMLOOPS = tonumber(args[1]) or 1
+local FARMLOOPS = tonumber(args[1]) or 12345
 
 local SAPPLING_DISTANCE = 2
 local SLEEP_TIME = 5
+local MIN_FUEL = 80
+
+local BONE_HEIGHT = 1
+local FUEL_HEIGHT = 2
+local SAPPLING_HEIGHT = 3
 
 function forward(n) for i = 1, n do turtle.forward() end end
 
 function back(n) for i = 1, n do turtle.back() end end
+
+function up(n) for i = 1, n do turtle.up() end end
+
+function down(n) for i = 1, n do turtle.down() end end
 
 function turnaround()
     assert(turtle.turnRight())
     assert(turtle.turnRight())
 end
 
+local function getItemFromChest(height)
+    -- assumes we are at tree pos
+    back(SAPPLING_DISTANCE)
+    up(height)
+    local found = false
+    turnaround()
+    selectEmptySlot()
+    found = turtle.suck(64)
+    turnaround()
+    down(height)
+    forward(SAPPLING_DISTANCE)
+    return found
+end
+
 local function refuel()
-    if turtle.getFuelLevel() < 20 then
+    if turtle.getFuelLevel() < MIN_FUEL then
         for i = 1, 16 do
             turtle.select(i)
             if turtle.refuel(1) then break end
         end
+    end
+    if turtle.getFuelLevel() < MIN_FUEL then
+        print("Out of fuel, getting some from chest")
+        getItemFromChest(FUEL_HEIGHT)
     end
 end
 
@@ -27,7 +54,8 @@ function findBonemeal()
     for slot = 1, 16 do
         local item = turtle.getItemDetail(slot)
         if item and
-            (item.name == "minecraft:bone_meal" or item.name:find("bonemeal")) then
+            (item.name == "minecraft:bone_meal" or item.name:find("bonemeal") or
+                (item.name == "minecraft:dye" and item.damage == 15)) then
             return slot
         end
     end
@@ -44,34 +72,31 @@ function selectEmptySlot()
     return 0 -- Return 0 if no empty slot is found
 end
 
-function fetchBonemealFromChest()
-    -- assumes we are at start pos
-    assert(turtle.up())
-    local chest = peripheral.wrap("behind")
-    if not chest then
-        print("No Chest Found")
-        assert(turtle.down())
-        return false
+function getSapplingId()
+    local sappling_id = 0
+    for i = 1, 16 do
+        turtle.select(i)
+        local item = turtle.getItemDetail()
+        if item and item.name:find("sapling") then
+            sappling_id = i
+        end
     end
-    turnaround()
-    selectEmptySlot()
-    got_item = turtle.suck(64)
-    assert(turtle.down())
-    turnaround()
-    return got_item
+    return sappling_id
 end
 
 local function plantSapling()
     print("Planting sappling")
     forward(SAPPLING_DISTANCE)
-    for i = 1, 16 do
-        turtle.select(i)
-        local item = turtle.getItemDetail()
-        if item and item.name:find("sapling") then
-            placedWell = turtle.place()
-            print("Tried placing it")
-            return placedWell
-        end
+    local sappling_id = 0
+    sappling_id = getSapplingId()
+    if sappling_id == 0 then
+        print("No sappling found, getting from chest")
+        getItemFromChest(SAPPLING_HEIGHT)
+    end
+    sappling_id = getSapplingId()
+    if sappling_id ~= 0 then
+        turtle.select(sappling_id)
+        return turtle.place()
     end
     return false
 end
@@ -91,6 +116,7 @@ local function harvestTree()
         turtle.up()
     end
     while not turtle.detectDown() do turtle.down() end
+    collectDrops()
     back(1)
 end
 
@@ -110,7 +136,7 @@ local function feedBoneMealUntilTree()
     local boneMealSlot = findBonemeal()
     if boneMealSlot == 0 then
         print("No bonemeal found")
-        return fetchBonemealFromChest()
+        return getItemFromChest(BONE_HEIGHT)
     end
     turtle.select(boneMealSlot)
     for i = 1, 10 do
@@ -172,7 +198,8 @@ function main_loop(farmLoops)
             if feedBoneMealUntilTree() then
                 print("Tree has grown")
             else
-                print("Tree didn't grow and no bonemeal, sleeping " .. SLEEP_TIME .. "s")
+                print("Tree didn't grow and no bonemeal, sleeping " ..
+                          SLEEP_TIME .. "s")
                 os.sleep(SLEEP_TIME)
             end
         else
