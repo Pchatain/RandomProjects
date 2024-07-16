@@ -1,5 +1,4 @@
 -- treeFarmer.lua
-
 local args = {...}
 local FARMLOOPS = tonumber(args[1]) or 1
 
@@ -10,6 +9,57 @@ local function refuel()
             if turtle.refuel(1) then break end
         end
     end
+end
+
+function findBonemeal()
+    for slot = 1, 16 do
+        local item = turtle.getItemDetail(slot)
+        if item and
+            (item.name == "minecraft:bone_meal" or item.name:find("bonemeal")) then
+            return slot
+        end
+    end
+    return 0
+end
+
+function selectEmptySlot()
+    for slot = 1, 16 do
+        if turtle.getItemCount(slot) == 0 then
+            turtle.select(slot)
+            return slot
+        end
+    end
+    return 0 -- Return 0 if no empty slot is found
+end
+
+function fetchBonemealFromChest()
+    -- assumes we are at start pos
+    assert(turtle.up())
+    local chest = peripheral.wrap("behind")
+    if not chest then
+        print("No Chest Found")
+        assert(turtle.down())
+        return false
+    end
+    assert(turtle.turnRight())
+    assert(turtle.turnRight())
+    selectEmptySlot()
+    got_item = turtle.suck(64)
+    assert(turtle.down())
+    assert(turtle.turnRight())
+    assert(turtle.turnRight())
+    return got_item
+end
+
+local function feedBoneMeal()
+    local boneMealSlot = findBonemeal()
+    if boneMealSlot == 0 then
+        print("No bonemeal found")
+        return fetchBonemealFromChest()
+    end
+    turtle.select(boneMealSlot)
+    turtle.place()
+    return true
 end
 
 local function plantSapling()
@@ -66,9 +116,7 @@ function main_loop(farmLoops)
         if isTree() then
             harvestTree()
             nTrees = nTrees + 1
-            if nTrees < farmLoops then
-                plantSapling()
-            end
+            if nTrees < farmLoops then plantSapling() end
         elseif isSapling() then
             if nLoops % 30 == 0 then
                 print("Waiting for tree to grow " .. nLoops)
