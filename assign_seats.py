@@ -36,7 +36,7 @@ def plot(image_path, positions, driver, people, weights, name=""):
     file_name = f"seating_chart_{day}_{hour}" + name  + ".png"
     plt.savefig(file_name)
 
-def van():
+def van(name=""):
     print("Van")
     image_path = "van.png"
 
@@ -45,7 +45,7 @@ def van():
     normal_people = ["Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"]
     back_seat_kings = ["Gus", "Hedge"]
 
-    weights = [25] * 2 + [8] * len(normal_people) + [1] * 2
+    weights = [8] * 2 + [8] * len(normal_people) + [1] * 2
     probs = [w / sum(weights) for w in weights]
     for prob in probs:
         print(f"{prob:.2f}", end=", ")
@@ -56,7 +56,7 @@ def van():
                 (0.3, 0.75), (0.9, 0.75), (1.5, 0.75),  # Back row
                 (0.6, 0), (1.4, 0)]  # Two seats in the trunk
     people = front_seat_princesses + normal_people + back_seat_kings
-    plot(image_path, positions, driver, people, weights)
+    plot(image_path, positions, driver, people, weights, name=name)
 
 def cars():
     print("Cars")
@@ -79,7 +79,8 @@ def cars():
 
 def main(vehicle="van"):
     if vehicle == "van":
-        van()
+        van(name="_from_hotel")
+        van(name="_from_boathouse")
     elif vehicle == "cars":
         cars()
     else:
