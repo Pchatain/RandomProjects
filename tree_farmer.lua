@@ -86,7 +86,6 @@ end
 
 local function plantSapling()
     print("Planting sappling")
-    forward(SAPPLING_DISTANCE)
     local sappling_id = 0
     sappling_id = getSapplingId()
     if sappling_id == 0 then
@@ -186,10 +185,10 @@ function main_loop(farmLoops)
             nTrees = nTrees + 1
             collectDrops()
             back(SAPPLING_DISTANCE)
-            collectDrops()
             turnaround()
             placeWoodInChest()
             turnaround()
+            forward(SAPPLING_DISTANCE)
             if nTrees < farmLoops then plantSapling() end
         elseif isSapling() then
             if nLoops % 30 == 0 then
@@ -211,6 +210,7 @@ function main_loop(farmLoops)
 end
 
 function main(farmLoops)
+    -- Assumes we are at sappling position
     if isSapling() then
         print("Starting tree farm")
     elseif plantSapling() then
@@ -221,5 +221,9 @@ function main(farmLoops)
     end
     main_loop(farmLoops)
 end
+
+refuel()
+forward(SAPPLING_DISTANCE)
 main(FARMLOOPS)
+back(SAPPLING_DISTANCE)
 print("Tree farmer done")
