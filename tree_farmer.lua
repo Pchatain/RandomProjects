@@ -23,7 +23,34 @@ function turnaround()
     assert(turtle.turnRight())
 end
 
-local function getItemFromChest(height)
+function isChest()
+    local success, data = turtle.inspect()
+    if success then return data.name:find("chest") end
+    return false
+end
+
+function returnToStart()
+    down(SAPPLING_HEIGHT)
+    assert(turtle.detectDown())
+    while true do
+        moved = turtle.forward()
+        if isTree() or isSapling() then
+            turnaround()
+        end
+        if isChest() then
+            turnaround()
+            break
+        end
+        if moved and not turtle.detectDown() then
+            turtle.back()
+            turtle.turnRight()
+        elseif not moved then
+            turtle.turnRight()
+        end
+    end
+end
+
+function getItemFromChest(height)
     -- assumes we are at tree pos
     back(SAPPLING_DISTANCE)
     up(height)
@@ -37,7 +64,8 @@ local function getItemFromChest(height)
     return found
 end
 
-local function refuel()
+function refuel()
+    -- Assumes we are at tree planting position
     if turtle.getFuelLevel() < MIN_FUEL then
         for i = 1, 16 do
             turtle.select(i)
@@ -46,6 +74,7 @@ local function refuel()
     end
     if turtle.getFuelLevel() < MIN_FUEL then
         print("Out of fuel, getting some from chest")
+
         getItemFromChest(FUEL_HEIGHT)
     end
 end
@@ -84,7 +113,8 @@ function getSapplingId()
     return sappling_id
 end
 
-local function plantSapling()
+function plantSapling()
+    -- assumes we are next to tree.
     print("Planting sappling")
     local sappling_id = 0
     sappling_id = getSapplingId()
@@ -100,14 +130,14 @@ local function plantSapling()
     return false
 end
 
-local function collectDrops()
+function collectDrops()
     for i = 1, 4 do
         turtle.suck()
         turtle.turnRight()
     end
 end
 
-local function harvestTree()
+function harvestTree()
     turtle.dig()
     forward(1)
     while turtle.detectUp() do
@@ -119,19 +149,19 @@ local function harvestTree()
     back(1)
 end
 
-local function isSapling()
+function isSapling()
     local success, data = turtle.inspect()
     if success then return data.name:find("sapling") end
     return false
 end
 
-local function isTree()
+function isTree()
     local success, data = turtle.inspect()
     if success then return data.name:find("log") end
     return false
 end
 
-local function feedBoneMealUntilTree()
+function feedBoneMealUntilTree()
     local boneMealSlot = findBonemeal()
     if boneMealSlot == 0 then
         print("No bonemeal found")
@@ -222,7 +252,7 @@ function main(farmLoops)
     main_loop(farmLoops)
 end
 
-refuel()
+returnToStart()
 forward(SAPPLING_DISTANCE)
 main(FARMLOOPS)
 back(SAPPLING_DISTANCE)
