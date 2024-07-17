@@ -34,6 +34,7 @@ def plot(image_path, positions, driver, people, weights, name=""):
     else:
         hour = "PM"
     file_name = f"seating_chart_{day}_{hour}" + name  + ".png"
+    ax.set_title(f"Seating Chart {day} {hour}{name}")
     plt.savefig(file_name)
 
 def van(name=""):
