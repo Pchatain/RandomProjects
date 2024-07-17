@@ -30,24 +30,30 @@ function isChest()
 end
 
 function returnToStart()
+    print("Returning to start")
     down(SAPPLING_HEIGHT)
     assert(turtle.detectDown())
-    while true do
+    for i = 1, 100 do
         moved = turtle.forward()
         if isTree() or isSapling() then
+            print("Found tree or sapling, turning around")
             turnaround()
         end
         if isChest() then
+            print("Found chest, turning around")
             turnaround()
-            break
+            return true
         end
         if moved and not turtle.detectDown() then
+            print("Moved forward, but no ground detected so backing up and turning around")
             turtle.back()
             turtle.turnRight()
         elseif not moved then
+            print("Move failed, turning right")
             turtle.turnRight()
         end
     end
+    return false
 end
 
 function getItemFromChest(height)
@@ -252,7 +258,7 @@ function main(farmLoops)
     main_loop(farmLoops)
 end
 
-returnToStart()
+assert(returnToStart())
 forward(SAPPLING_DISTANCE)
 main(FARMLOOPS)
 back(SAPPLING_DISTANCE)
