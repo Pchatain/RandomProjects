@@ -1,9 +1,9 @@
 -- treeFarmer.lua
 local args = {...}
-local FARMLOOPS = tonumber(args[1]) or 12345
+local FARMLOOPS = tonumber(args[1]) or 10
 
 local SAPPLING_DISTANCE = 2
-local SLEEP_TIME = 5
+local SLEEP_TIME = 60
 local MIN_FUEL = 80
 
 local BONE_HEIGHT = 1
@@ -33,7 +33,7 @@ function returnToStart()
     print("Returning to start")
     down(SAPPLING_HEIGHT)
     assert(turtle.detectDown())
-    for i = 1, 100 do
+    for i = 1, 50 do
         moved = turtle.forward()
         if isTree() or isSapling() then
             print("Found tree or sapling, turning around")
@@ -233,7 +233,7 @@ function main_loop(farmLoops)
             if feedBoneMealUntilTree() then
                 print("Tree has grown")
             else
-                print("Tree didn't grow and no bonemeal, sleeping " ..
+                print("Tree didn't grow and/or no bonemeal, sleeping " ..
                           SLEEP_TIME .. "s")
                 os.sleep(SLEEP_TIME)
             end
@@ -247,7 +247,7 @@ end
 
 function main(farmLoops)
     -- Assumes we are at sappling position
-    if isSapling() then
+    if isSapling() or isTree() then
         print("Starting tree farm")
     elseif plantSapling() then
         print("Sapling placed. Starting tree farm")
