@@ -19,6 +19,12 @@ def plot(image_path, positions, driver, people, weights, name=""):
     people = driver + people
     if STATS:
         return people
+    print(name)
+    for i in range(len(people)):
+        print(f"{i}={people[i]}", end=", ")
+        if i % 3 == 2:
+            print()
+        
 
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.imshow(car_image, extent=[-0.5, 2.5, -0.5, 3.5])
