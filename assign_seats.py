@@ -33,7 +33,7 @@ def plot(image_path, positions, driver, people, weights, name=""):
         hour = "AM"
     else:
         hour = "PM"
-    file_name = f"seating_chart_{day}_{hour}" + name  + ".png"
+    file_name = f"{day}_{hour}" + name  + ".png"
     ax.set_title(f"Seating Chart {day} {hour}{name}")
     plt.savefig(file_name)
 
@@ -43,10 +43,10 @@ def van(name=""):
 
     driver = ["Chris"]
     front_seat_princesses = ["Henry", "Nick"]
-    normal_people = ["Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"]
-    back_seat_kings = ["Gus", "Hedge"]
+    normal_people = ["Peter", "Pieter", "Clark", "Rielly", "Christian"]
+    back_seat_kings = ["Gus"]
 
-    weights = [8] * 2 + [8] * len(normal_people) + [1] * 2
+    weights = [8] * 2 + [8] * len(normal_people) + [1] * 1
     probs = [w / sum(weights) for w in weights]
     for prob in probs:
         print(f"{prob:.2f}", end=", ")
