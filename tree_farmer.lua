@@ -53,6 +53,7 @@ function returnToStart()
             turtle.turnRight()
         end
     end
+    print("Returning to Start failed!")
     return false
 end
 
