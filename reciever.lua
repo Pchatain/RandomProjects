@@ -10,7 +10,7 @@ function listenForCode()
         local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
         
         if freq == channel then
-            print("Received code: " .. message)
+            print("Received code")
             modem.transmit(channel, channel, "Code received", distance)
             return message
         end

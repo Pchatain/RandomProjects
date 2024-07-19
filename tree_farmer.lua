@@ -1,6 +1,4 @@
--- treeFarmer.lua
-local args = {...}
-local FARMLOOPS = tonumber(args[1]) or 1234
+local FARMLOOPS = 1234
 
 local SAPPLING_DISTANCE = 2
 local SLEEP_TIME = 60
@@ -11,6 +9,24 @@ local BONE_HEIGHT = 1
 local FUEL_HEIGHT = 2
 local SAPPLING_HEIGHT = 3
 
+function endCondition()
+    -- Turtle Code
+    local modem = peripheral.find("modem")
+    local channel = 42
+    modem.open(channel)
+
+    -- Main program
+    local code = listenForCode()
+    executeCode(code)
+end
+
+function customAssert(condition, message)
+    if not condition then
+        print(message)
+        endCondition()
+    end
+end
+
 function forward(n) for i = 1, n do turtle.forward() end end
 
 function back(n) for i = 1, n do turtle.back() end end
@@ -20,8 +36,8 @@ function up(n) for i = 1, n do turtle.up() end end
 function down(n) for i = 1, n do turtle.down() end end
 
 function turnaround()
-    assert(turtle.turnRight(), "failed to turn right")
-    assert(turtle.turnRight(), "failed to turn right")
+    customAssert(turtle.turnRight(), "failed to turn right")
+    customAssert(turtle.turnRight(), "failed to turn right")
 end
 
 function isChest()
@@ -32,9 +48,9 @@ end
 
 function returnToStart()
     print("Returning to start")
-    assert(refuel(), "User error: not enough fuel provided.")
+    customAssert(refuel(), "User error: not enough fuel provided.")
     down(TREE_HEIGHT)
-    assert(turtle.detectDown(), "No ground detected espite going down.")
+    customAssert(turtle.detectDown(), "No ground detected espite going down.")
     for i = 1, 50 do
         if isTree() or isSapling() then
             print("Found tree or sapling, turning around")
@@ -128,7 +144,7 @@ function plantSapling()
     sappling_id = getSapplingId()
     if sappling_id == 0 then
         print("No sappling found, getting from chest")
-        assert(getItemFromChest(SAPPLING_HEIGHT))
+        customAssert(getItemFromChest(SAPPLING_HEIGHT))
     end
     sappling_id = getSapplingId()
     if sappling_id ~= 0 then
@@ -229,7 +245,7 @@ function main_loop(farmLoops)
     while nTrees < farmLoops do
         if not refuel() then
             print("Out of fuel, getting some from chest")
-            assert(getItemFromChest(FUEL_HEIGHT), "failed to get fuel")
+            customAssert(getItemFromChest(FUEL_HEIGHT), "failed to get fuel")
         end
         if isTree() then
             harvestTree()
@@ -277,16 +293,11 @@ function main(farmLoops)
     main_loop(farmLoops)
 end
 
-assert(returnToStart(), "failed to return to start")
+customAssert(returnToStart(), "failed to return to start")
 forward(SAPPLING_DISTANCE)
 main(FARMLOOPS)
 back(SAPPLING_DISTANCE)
 print("Tree farmer done")
-
--- Turtle Code
-local modem = peripheral.find("modem")
-local channel = 42
-modem.open(channel)
 
 -- Function to listen for code
 function listenForCode()
@@ -295,7 +306,7 @@ function listenForCode()
         local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
         
         if freq == channel then
-            print("Received code: " .. message)
+            print("Received code")
             modem.transmit(channel, channel, "Code received", distance)
             return message
         end
@@ -308,10 +319,6 @@ function executeCode(code)
     if func then
         func()
     else
-        print("Error in received code: " .. err)
+        print("Error in received code, func didn't work " .. err)
     end
 end
-
--- Main program
-local code = listenForCode()
-executeCode(code)

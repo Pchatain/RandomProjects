@@ -1,3 +1,8 @@
+shell.run("delete", "farmer.lua")
+print("deleted farmer.lua")
+shell.run("pastebin", "get", "X4PAb3dc", "farmer.lua") -- 1nLz1t5z?
+print("downloaded farmer.lua")
+local filePath = "farmer.lua"
 -- Computer Code
 local modem = peripheral.find("modem")
 local channel = 42
@@ -29,8 +34,6 @@ function listenForResponses()
 end
 
 -- Main program
-print("Enter the file path to broadcast:")
-local filePath = io.read()
 local file = fs.open(filePath, "r")
 if file then
     local code = file.readAll()
