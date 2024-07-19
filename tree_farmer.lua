@@ -1,6 +1,6 @@
 -- treeFarmer.lua
 local args = {...}
-local FARMLOOPS = tonumber(args[1]) or 10
+local FARMLOOPS = tonumber(args[1]) or 2
 
 local SAPPLING_DISTANCE = 2
 local SLEEP_TIME = 60
@@ -31,14 +31,15 @@ end
 
 function returnToStart()
     print("Returning to start")
+    refuel()
     down(SAPPLING_HEIGHT)
     assert(turtle.detectDown())
     for i = 1, 50 do
-        moved = turtle.forward()
         if isTree() or isSapling() then
             print("Found tree or sapling, turning around")
             turnaround()
         end
+        moved = turtle.forward()
         if isChest() then
             print("Found chest, turning around")
             turnaround()
@@ -54,6 +55,9 @@ function returnToStart()
         end
     end
     print("Returning to Start failed!")
+    if turtle.getFuelLevel() < MIN_FUEL then
+        print("Out of Fuel!")
+    end
     return false
 end
 
@@ -79,11 +83,7 @@ function refuel()
             if turtle.refuel(1) then break end
         end
     end
-    if turtle.getFuelLevel() < MIN_FUEL then
-        print("Out of fuel, getting some from chest")
-
-        getItemFromChest(FUEL_HEIGHT)
-    end
+    return turtle.getFuelLevel() >= MIN_FUEL
 end
 
 function findBonemeal()
@@ -216,7 +216,10 @@ function main_loop(farmLoops)
     nTrees = 0
     nLoops = 0
     while nTrees < farmLoops do
-        refuel()
+        if not refuel() then
+            print("Out of fuel, getting some from chest")
+            getItemFromChest(FUEL_HEIGHT)
+        end
         if isTree() then
             harvestTree()
             nTrees = nTrees + 1
@@ -232,7 +235,7 @@ function main_loop(farmLoops)
                 print("Waiting for tree to grow " .. nLoops)
             end
             if feedBoneMealUntilTree() then
-                print("Tree has grown")
+                print("Tree was fed bonemeal")
             else
                 print("Tree didn't grow and/or no bonemeal, sleeping " ..
                           SLEEP_TIME .. "s")
