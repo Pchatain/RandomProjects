@@ -5,6 +5,7 @@ local FARMLOOPS = tonumber(args[1]) or 2
 local SAPPLING_DISTANCE = 2
 local SLEEP_TIME = 60
 local MIN_FUEL = 80
+local TREE_HEIGHT = 7
 
 local BONE_HEIGHT = 1
 local FUEL_HEIGHT = 2
@@ -19,8 +20,8 @@ function up(n) for i = 1, n do turtle.up() end end
 function down(n) for i = 1, n do turtle.down() end end
 
 function turnaround()
-    assert(turtle.turnRight())
-    assert(turtle.turnRight())
+    assert(turtle.turnRight(), "failed to turn right")
+    assert(turtle.turnRight(), "failed to turn right")
 end
 
 function isChest()
@@ -31,9 +32,9 @@ end
 
 function returnToStart()
     print("Returning to start")
-    refuel()
-    down(SAPPLING_HEIGHT)
-    assert(turtle.detectDown())
+    assert(refuel(), "User error: not enough fuel provided.")
+    down(TREE_HEIGHT)
+    assert(turtle.detectDown(), "No ground detected espite going down.")
     for i = 1, 50 do
         if isTree() or isSapling() then
             print("Found tree or sapling, turning around")
@@ -62,7 +63,7 @@ function returnToStart()
 end
 
 function getItemFromChest(height)
-    -- assumes we are at tree pos
+    -- assumes we are at tree pos. Return true or false if found item
     back(SAPPLING_DISTANCE)
     up(height)
     local found = false
@@ -127,7 +128,7 @@ function plantSapling()
     sappling_id = getSapplingId()
     if sappling_id == 0 then
         print("No sappling found, getting from chest")
-        getItemFromChest(SAPPLING_HEIGHT)
+        assert(getItemFromChest(SAPPLING_HEIGHT))
     end
     sappling_id = getSapplingId()
     if sappling_id ~= 0 then
@@ -141,12 +142,16 @@ function collectDrops()
     turtle.suck()
 end
 
-function harvestTree()
+function harvestTree(minHeight)
+    if minHeight == nil then minHeight = 0 end
     turtle.dig()
+    turtle.suck()
     forward(1)
-    while turtle.detectUp() do
+    nDigs = 0
+    while turtle.detectUp() or nDigs < minHeight do
         turtle.digUp()
         turtle.up()
+        nDigs = nDigs + 1
     end
     while not turtle.detectDown() do turtle.down() end
     collectDrops()
@@ -167,16 +172,24 @@ end
 
 function feedBoneMealUntilTree()
     local boneMealSlot = findBonemeal()
+    local boneFed = 0
     if boneMealSlot == 0 then
         print("No bonemeal found")
-        return getItemFromChest(BONE_HEIGHT)
+        if not getItemFromChest(BONE_HEIGHT) then
+            print("No bonemeal in chest")
+            return 0
+        end
     end
     turtle.select(boneMealSlot)
     for i = 1, 10 do
-        turtle.place()
-        if isTree() then return true end
+        fed = turtle.place()
+        if fed then
+            boneFed = boneFed + 1
+        end
+        if isTree() then break end
+        os.sleep(0.1)
     end
-    return false
+    return boneFed
 end
 
 function placeWoodInChest()
@@ -216,7 +229,7 @@ function main_loop(farmLoops)
     while nTrees < farmLoops do
         if not refuel() then
             print("Out of fuel, getting some from chest")
-            getItemFromChest(FUEL_HEIGHT)
+            assert(getItemFromChest(FUEL_HEIGHT), "failed to get fuel")
         end
         if isTree() then
             harvestTree()
@@ -232,12 +245,16 @@ function main_loop(farmLoops)
             if nLoops % 30 == 0 then
                 print("Waiting for tree to grow " .. nLoops)
             end
-            if feedBoneMealUntilTree() then
-                print("Tree was fed bonemeal")
-            else
-                print("Tree didn't grow and/or no bonemeal, sleeping " ..
+            local nBoneMealFed = feedBoneMealUntilTree()
+            if isTree() then
+                print("Tree grew!")
+            elseif nBoneMealFed < 5 then
+                print("No bonemeal, waiting for tree to grow for " ..
                           SLEEP_TIME .. "s")
                 os.sleep(SLEEP_TIME)
+            else
+                print("Tree didn't grow after feeding >5 bonemeal. Clearing obstructions")
+                harvestTree(TREE_HEIGHT)
             end
         else
             print("No tree or sapling found. Somting wong")
@@ -260,7 +277,7 @@ function main(farmLoops)
     main_loop(farmLoops)
 end
 
-assert(returnToStart())
+assert(returnToStart(), "failed to return to start")
 forward(SAPPLING_DISTANCE)
 main(FARMLOOPS)
 back(SAPPLING_DISTANCE)
