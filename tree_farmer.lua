@@ -138,10 +138,7 @@ function plantSapling()
 end
 
 function collectDrops()
-    for i = 1, 4 do
-        turtle.suck()
-        turtle.turnRight()
-    end
+    turtle.suck()
 end
 
 function harvestTree()
@@ -183,6 +180,7 @@ function feedBoneMealUntilTree()
 end
 
 function placeWoodInChest()
+    -- Assumes facing the chest at start pos
     local woodCount = 0
     local originalSlot = turtle.getSelectedSlot()
 
@@ -223,9 +221,9 @@ function main_loop(farmLoops)
         if isTree() then
             harvestTree()
             nTrees = nTrees + 1
-            collectDrops()
-            back(SAPPLING_DISTANCE)
             turnaround()
+            collectDrops()
+            forward(SAPPLING_DISTANCE)
             placeWoodInChest()
             turnaround()
             forward(SAPPLING_DISTANCE)
@@ -267,3 +265,36 @@ forward(SAPPLING_DISTANCE)
 main(FARMLOOPS)
 back(SAPPLING_DISTANCE)
 print("Tree farmer done")
+
+-- Turtle Code
+local modem = peripheral.find("modem")
+local channel = 42
+modem.open(channel)
+
+-- Function to listen for code
+function listenForCode()
+    print("Listening for code...")
+    while true do
+        local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
+        
+        if freq == channel then
+            print("Received code: " .. message)
+            modem.transmit(channel, channel, "Code received", distance)
+            return message
+        end
+    end
+end
+
+-- Function to execute received code
+function executeCode(code)
+    local func, err = load(code)
+    if func then
+        func()
+    else
+        print("Error in received code: " .. err)
+    end
+end
+
+-- Main program
+local code = listenForCode()
+executeCode(code)
