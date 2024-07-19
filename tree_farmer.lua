@@ -1,6 +1,6 @@
 -- treeFarmer.lua
 local args = {...}
-local FARMLOOPS = tonumber(args[1]) or 2
+local FARMLOOPS = tonumber(args[1]) or 1234
 
 local SAPPLING_DISTANCE = 2
 local SLEEP_TIME = 60
