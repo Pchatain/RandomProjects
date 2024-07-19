@@ -8,6 +8,58 @@ import tabulate
 
 STATS = False
 
+def van(name="", ppl=None):
+    if not STATS: print("Van")
+    image_path = "van.png"
+
+    driver = ["Chris"]
+    front_seat_princesses, fsp_w = ["Henry", "Nick"], 8
+    normal_people, np_w = [
+        "PeterC",
+        "Pieter",
+        "Clark",
+        "Rielly",
+        "Christian",
+        "Evan",
+    ], 8
+    back_seat_kings, bsk_w = ["Gus", "Hedge"], 1
+    if ppl:
+        for person in ppl:
+            if person in front_seat_princesses:
+                front_seat_princesses.remove(person)
+                print(f"Removed {person} from front_seat_princesses")
+            elif person in normal_people:
+                normal_people.remove(person)
+                print(f"Removed {person} from normal_people")
+            elif person in back_seat_kings:
+                back_seat_kings.remove(person)
+                print(f"Removed {person} from back_seat_kings")
+            else:
+                print(f"Person {person} not found in any group")
+    weights = [fsp_w] * len(front_seat_princesses) + [np_w] * len(
+        normal_people) + [bsk_w] * len(back_seat_kings)
+    probs = [w / sum(weights) for w in weights]
+    if not STATS:
+        for prob in probs:
+            print(f"{prob:.2f}", end=", ")
+        print()
+
+    positions = [
+        (0.4, 2.1),
+        (1, 2.1),
+        (1.5, 2.1),  # Front row
+        (0.3, 1.35),
+        (0.9, 1.35),
+        (1.5, 1.35),  # Middle row
+        (0.3, 0.75),
+        (0.9, 0.75),
+        (1.5, 0.75),  # Back row
+        (0.6, 0),
+        (1.4, 0)
+    ]  # Two seats in the trunk
+    people = front_seat_princesses + normal_people + back_seat_kings
+    return plot(image_path, positions, driver, people, weights, name=name)
+
 def plot(image_path, positions, driver, people, weights, name=""):
     car_image = mpimg.imread(image_path)
     if weights is None:
@@ -15,7 +67,8 @@ def plot(image_path, positions, driver, people, weights, name=""):
     weights = [w / sum(weights) for w in weights]
 
     # Randomly assign seats
-    people = list(np.random.choice(people, len(people), replace=False, p=weights))
+    people = list(
+        np.random.choice(people, len(people), replace=False, p=weights))
     people = driver + people
     if STATS:
         return people
@@ -24,15 +77,21 @@ def plot(image_path, positions, driver, people, weights, name=""):
         print(f"{i}={people[i]}", end=", ")
         if i % 3 == 2:
             print()
-        
 
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.imshow(car_image, extent=[-0.5, 2.5, -0.5, 3.5])
 
     for i, person in enumerate(people):
         col, row = positions[i]
-        ax.text(col, row, person, ha='center', va='center', fontsize=6,
-                bbox=dict(boxstyle="round,pad=0.3", edgecolor='black', facecolor='lightblue'))
+        ax.text(col,
+                row,
+                person,
+                ha='center',
+                va='center',
+                fontsize=6,
+                bbox=dict(boxstyle="round,pad=0.3",
+                          edgecolor='black',
+                          facecolor='lightblue'))
 
     ax.set_xlim(-0.5, 2.5)
     ax.set_ylim(-0.5, 3.5)
@@ -44,32 +103,9 @@ def plot(image_path, positions, driver, people, weights, name=""):
         hour = "AM"
     else:
         hour = "PM"
-    file_name = f"{day}_{hour}" + name  + ".png"
+    file_name = f"{day}_{hour}" + name + ".png"
     ax.set_title(f"Seating Chart {day} {hour}{name}")
     plt.savefig(file_name)
-
-def van(name=""):
-    if not STATS: print("Van")
-    image_path = "van.png"
-
-    driver = ["Chris"]
-    front_seat_princesses, fsp_w = ["Henry", "Nick"], 8
-    normal_people, np_w = ["PeterC", "Pieter", "Clark", "Rielly", "Christian", "Evan"], 8
-    back_seat_kings, bsk_w = ["Gus", "Hedge"], 1
-
-    weights = [fsp_w] * len(front_seat_princesses) + [np_w] * len(normal_people) + [bsk_w] * len(back_seat_kings)
-    probs = [w / sum(weights) for w in weights]
-    if not STATS:
-        for prob in probs:
-            print(f"{prob:.2f}", end=", ")
-        print()
-
-    positions = [(0.4, 2.1), (1, 2.1), (1.5, 2.1),  # Front row
-                (0.3, 1.35), (0.9, 1.35), (1.5, 1.35),  # Middle row
-                (0.3, 0.75), (0.9, 0.75), (1.5, 0.75),  # Back row
-                (0.6, 0), (1.4, 0)]  # Two seats in the trunk
-    people = front_seat_princesses + normal_people + back_seat_kings
-    return plot(image_path, positions, driver, people, weights, name=name)
 
 def cars():
     print("Cars")
@@ -77,28 +113,38 @@ def cars():
 
     driver = ["Chris"]
     # spares =  ["Gus", "Hedge"]
-    all_people = ["Henry", "Nick"] + ["Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"]
-    positions = [(0.4, 2.1), (1.5, 2.1),  # Front row
-                (0.3, 1.35), (0.9, 1.35), (1.5, 1.35),  # Middle row
+    all_people = ["Henry", "Nick"] + [
+        "Peter", "Pieter", "Clark", "Rielly", "Christian", "Evan"
+    ]
+    positions = [
+        (0.4, 2.1),
+        (1.5, 2.1),  # Front row
+        (0.3, 1.35),
+        (0.9, 1.35),
+        (1.5, 1.35),  # Middle row
     ]
     i = 0
     while all_people:
-        people_i = np.random.choice(all_people, min(4, len(all_people)), replace=False)
+        people_i = np.random.choice(all_people,
+                                    min(4, len(all_people)),
+                                    replace=False)
         if len(people_i) < 4:
             people_i = list(people_i) + [None] * (4 - len(people_i))
         plot(image_path, positions, driver, people_i, None, str(i))
         i += 1
         all_people = [p for p in all_people if p not in people_i]
 
-def main(vehicle="van"):
+
+def main(vehicle="van", ppl=None):
     if vehicle == "van":
-        van(name="_from_hotel")
-        van(name="_from_boathouse")
+        van(name="_from_a_hotel", ppl=ppl)
+        van(name="_from_boathouse", ppl=ppl)
     elif vehicle == "cars":
         cars()
     else:
         raise ValueError(f"Invalid vehicle `{vehicle}`")
-    
+
+
 def stats():
     n_trials = 10000
     trial1 = van()
@@ -116,7 +162,7 @@ def stats():
         for i in range(len(trial1)):
             ppl_map[person][i] = ppl_map[person][i] * 100 / n_trials
     # for person in ppl_map:
-        # print(f"{person}: {([ppl_map[person][k] for k in range(len(trial1))])}")
+    # print(f"{person}: {([ppl_map[person][k] for k in range(len(trial1))])}")
     # Prepare data for tabulate
     headers = ['Seat'] + trial1
     table_data = []
@@ -127,10 +173,12 @@ def stats():
     # Print the table
     table = tabulate.tabulate(table_data, headers=headers, tablefmt='grid')
     print(table)
-    
+
     # chris: [100%, 0, 0, 0,...,0]
     # clark: [15%, 13%, 17%, ..., 5%]
     # ...
+
+
 if __name__ == "__main__":
     if STATS:
         stats()
