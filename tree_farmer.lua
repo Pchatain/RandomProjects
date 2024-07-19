@@ -1,7 +1,7 @@
 local FARMLOOPS = 1234
 
 local SAPPLING_DISTANCE = 2
-local SLEEP_TIME = 60
+local SLEEP_TIME = 30
 local MIN_FUEL = 80
 local TREE_HEIGHT = 7
 
