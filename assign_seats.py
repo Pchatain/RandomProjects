@@ -149,7 +149,7 @@ def main(vehicle="van", ppl=None, add_ppl=None):
 
 
 def stats():
-    n_trials = 10000
+    n_trials = 1000
     trial1 = van()
     ppl_map = {}
     for person in trial1:
