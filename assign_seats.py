@@ -8,7 +8,7 @@ import tabulate
 
 STATS = False
 
-def van(name="", ppl=None):
+def van(name="", ppl=None, add_ppl=None):
     if not STATS: print("Van")
     image_path = "van.png"
 
@@ -36,6 +36,9 @@ def van(name="", ppl=None):
                 print(f"Removed {person} from back_seat_kings")
             else:
                 print(f"Person {person} not found in any group")
+    if add_ppl:
+        for person in add_ppl:
+            normal_people.append(person)
     weights = [fsp_w] * len(front_seat_princesses) + [np_w] * len(
         normal_people) + [bsk_w] * len(back_seat_kings)
     probs = [w / sum(weights) for w in weights]
@@ -135,10 +138,10 @@ def cars():
         all_people = [p for p in all_people if p not in people_i]
 
 
-def main(vehicle="van", ppl=None):
+def main(vehicle="van", ppl=None, add_ppl=None):
     if vehicle == "van":
-        van(name="_from_a_hotel", ppl=ppl)
-        van(name="_from_boathouse", ppl=ppl)
+        van(name="_from_a_hotel", ppl=ppl, add_ppl=add_ppl)
+        van(name="_from_boathouse", ppl=ppl, add_ppl=add_ppl)
     elif vehicle == "cars":
         cars()
     else:
