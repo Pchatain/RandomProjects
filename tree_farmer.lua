@@ -97,7 +97,7 @@ function refuel()
     if turtle.getFuelLevel() < MIN_FUEL then
         for i = 1, 16 do
             turtle.select(i)
-            if turtle.refuel(1) then break end
+            turtle.refuel()
         end
     end
     return turtle.getFuelLevel() >= MIN_FUEL
