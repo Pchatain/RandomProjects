@@ -322,3 +322,5 @@ function executeCode(code)
         print("Error in received code, func didn't work " .. err)
     end
 end
+print("Finished Successfully")
+endCondition()

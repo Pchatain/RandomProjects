@@ -1,6 +1,6 @@
 shell.run("delete", "farmer.lua")
 print("deleted farmer.lua")
-shell.run("pastebin", "get", "X4PAb3dc", "farmer.lua") -- 1nLz1t5z?
+shell.run("pastebin", "get", "bvnCeAaB", "farmer.lua") -- 1nLz1t5z?
 print("downloaded farmer.lua")
 local filePath = "farmer.lua"
 -- Computer Code
