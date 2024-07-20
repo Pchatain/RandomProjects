@@ -1,7 +1,7 @@
 USE_BONEMEAL = true
 CHANNEL = 42
 
-SAPPLING_DISTANCE = 2
+SAPPLING_DISTANCE = 3
 SLEEP_TIME = 30
 MIN_FUEL = 80
 TREE_HEIGHT = 7
@@ -87,7 +87,8 @@ function returnToStart()
     customAssert(refuel(), "User error: not enough fuel provided.")
     down(TREE_HEIGHT)
     customAssert(turtle.detectDown(), "No ground detected despite going down.")
-    for i = 1, 50 do
+    turtle.turnLeft() -- randomly turn left since odds are that will point us correctly
+    for i = 1, 150 do
         if itemInFrontHasName("log") or itemInFrontHasName("sapling") then
             print("Found tree or sapling, turning around")
             turnaround()
