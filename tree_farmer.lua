@@ -1,24 +1,15 @@
-local FARMLOOPS = 1234
+FARMLOOPS = 1234
+USE_BONEMEAL = true
 
-local SAPPLING_DISTANCE = 2
-local SLEEP_TIME = 30
-local MIN_FUEL = 80
-local TREE_HEIGHT = 7
+SAPPLING_DISTANCE = 2
+SLEEP_TIME = 30
+MIN_FUEL = 80
+TREE_HEIGHT = 7
+MAX_FORWARD = 64
 
-local BONE_HEIGHT = 1
-local FUEL_HEIGHT = 2
-local SAPPLING_HEIGHT = 3
-
-function becomeReceiver()
-    -- Use the equiped modem
-    local modem = peripheral.find("modem")
-    local channel = 42
-    modem.open(channel)
-
-    -- Wait until we get broadcasted code and then run the code.
-    local code = listenForCode()
-    executeCode(code)
-end
+BONE_HEIGHT = 1
+FUEL_HEIGHT = 2
+SAPPLING_HEIGHT = 3
 
 function customAssert(condition, message)
     if not condition then
@@ -27,9 +18,21 @@ function customAssert(condition, message)
     end
 end
 
-function forward(n) for i = 1, n do turtle.forward() end end
-
-function back(n) for i = 1, n do turtle.back() end end
+function forwardUntilObstructed(max_steps)
+    -- goes forward until it can't or no more path left, or reach max steps
+    -- returns number of steps moved
+    local steps = 0
+    if max_steps == nil then max_steps = MAX_FORWARD end
+    while not turtle.detect() and steps < max_steps do
+        turtle.forward()
+        if not turtle.detectDown() then
+            turtle.back()
+            break
+        end
+        steps = steps + 1
+    end
+    return steps
+end
 
 function up(n) for i = 1, n do turtle.up() end end
 
@@ -79,16 +82,20 @@ function returnToStart()
 end
 
 function getItemFromChest(height)
-    -- assumes we are at tree pos. Return true or false if found item
-    back(SAPPLING_DISTANCE)
+    -- assumes we are facing the sappling/tree farm position
+    -- returns whether or not we found the item in a chest
+    customAssert(turtle.turnLeft(), "failed to turn left!")
+    distance = forwardUntilObstructed()
     up(height)
     local found = false
-    turnaround()
-    selectEmptySlot()
+    emptySlotFound = selectEmptySlot()
+    customAssert(emptySlotFound ~= 0, "No empty slot found! Clear turtle inventory please.")
     found = turtle.suck(64)
     turnaround()
     down(height)
-    forward(SAPPLING_DISTANCE)
+    returnDist = forwardUntilObstructed(distance)
+    customAssert(returnDist == distance, "failed to return to position we were working on. Went " .. returnDist .. " when we needed to go " .. distance)
+    customAssert(turtle.turnLeft(), "failed to turn left!")
     return found
 end
 
@@ -103,7 +110,7 @@ function refuel()
     return turtle.getFuelLevel() >= MIN_FUEL
 end
 
-function findBonemeal()
+function findBonemealSlot()
     for slot = 1, 16 do
         local item = turtle.getItemDetail(slot)
         if item and
@@ -125,7 +132,7 @@ function selectEmptySlot()
     return 0 -- Return 0 if no empty slot is found
 end
 
-function getSapplingId()
+function getSapplingSlot()
     local sappling_id = 0
     for i = 1, 16 do
         turtle.select(i)
@@ -140,15 +147,14 @@ end
 function plantSapling()
     -- assumes we are next to tree.
     print("Planting sappling")
-    local sappling_id = 0
-    sappling_id = getSapplingId()
-    if sappling_id == 0 then
+    local sappling_slot = getSapplingSlot()
+    if sappling_slot == 0 then
         print("No sappling found, getting from chest")
         customAssert(getItemFromChest(SAPPLING_HEIGHT))
     end
-    sappling_id = getSapplingId()
-    if sappling_id ~= 0 then
-        turtle.select(sappling_id)
+    sappling_slot = getSapplingSlot()
+    if sappling_slot ~= 0 then
+        turtle.select(sappling_slot)
         return turtle.place()
     end
     return false
@@ -159,10 +165,11 @@ function collectDrops()
 end
 
 function harvestTree(minHeight)
+    -- Assumes we are facing tree
     if minHeight == nil then minHeight = 0 end
     turtle.dig()
     turtle.suck()
-    forward(1)
+    customAssert(turtle.forward(), "failed to move underneath tree after digging")
     nDigs = 0
     while turtle.detectUp() or nDigs < minHeight do
         turtle.digUp()
@@ -171,7 +178,7 @@ function harvestTree(minHeight)
     end
     while not turtle.detectDown() do turtle.down() end
     collectDrops()
-    back(1)
+    customAssert(turtle.back(), "failed to move back after harvesting tree")
 end
 
 function itemInFrontHasName(name)
@@ -181,7 +188,7 @@ function itemInFrontHasName(name)
 end
 
 function feedBoneMealUntilTree()
-    local boneMealSlot = findBonemeal()
+    local boneMealSlot = findBonemealSlot()
     local boneFed = 0
     if boneMealSlot == 0 then
         print("No bonemeal found")
@@ -202,6 +209,16 @@ function feedBoneMealUntilTree()
     return boneFed
 end
 
+function findWoodSlot()
+    for slot = 1, 16 do
+        local item = turtle.getItemDetail(slot)
+        if item and (item.name:find("log") or item.name:find("wood")) then
+            return slot
+        end
+    end
+    return 0
+end
+
 function placeWoodInChest()
     -- Assumes facing the chest at start pos
     local woodCount = 0
@@ -214,7 +231,7 @@ function placeWoodInChest()
         return 0
     end
 
-    -- Loop through all inventory slots
+    -- Loop through all inventory slots and place wood in chest
     for slot = 1, 16 do
         turtle.select(slot)
         local item = turtle.getItemDetail()
@@ -233,44 +250,61 @@ function placeWoodInChest()
     return woodCount
 end
 
-function main_loop(farmLoops)
-    nTrees = 0
-    nLoops = 0
-    while nTrees < farmLoops do
-        if not refuel() then
-            print("Out of fuel, getting some from chest")
-            customAssert(getItemFromChest(FUEL_HEIGHT), "failed to get fuel")
+function processFarm()
+    -- assumes we are facing the tree farm position
+    -- returns true if we harvested a tree
+    local nTrees = 0
+    local nLoops = 0
+    local treeHarvested = false
+    if not refuel() then
+        print("Out of fuel, getting some from chest")
+        customAssert(getItemFromChest(FUEL_HEIGHT), "failed to get fuel")
+    end
+    if itemInFrontHasName("log") then
+        harvestTree()
+        treeHarvested = true
+        nTrees = nTrees + 1
+        plantSapling()
+    elseif itemInFrontHasName("sapling") then
+        if nLoops % 30 == 0 then
+            print("Waiting for tree to grow " .. nLoops)
         end
+        local nBoneMealFed = feedBoneMealUntilTree()
         if itemInFrontHasName("log") then
-            harvestTree()
-            nTrees = nTrees + 1
+            print("Tree grew!")
+        elseif nBoneMealFed < 5 then
+            print("Less than 5 bonemeal fed and tree didn't grow.")
+            print("Since no bonemeal, turning bonemeal functionality off")
+            USE_BONEMEAL = false
+        else
+            print("Tree didn't grow after feeding > 4 bonemeal. Clearing obstructions")
+            harvestTree(TREE_HEIGHT)
+        end
+    else
+        customAssert(plantSapling(), "failed to plant sapling, please fix.")
+    end
+    return treeHarvested
+end
+
+function main()
+    -- Assumes we are at start position
+    while true do
+        steps = 1
+        treeHarvested = false
+        while steps > 0 do
+            steps = forwardUntilObstructed(SAPPLING_DISTANCE)
+            if steps == SAPPLING_DISTANCE then
+                turrtle.turnLeft()
+                if processFarm() then treeHarvested = true end
+                turtle.turnRight()
+            end
+        end
+        if treeHarvested then
             turnaround()
-            collectDrops()
-            forward(SAPPLING_DISTANCE)
+            forwardUntilObstructed()
             placeWoodInChest()
             turnaround()
-            forward(SAPPLING_DISTANCE)
-            if nTrees < farmLoops then plantSapling() end
-        elseif itemInFrontHasName("sapling") then
-            if nLoops % 30 == 0 then
-                print("Waiting for tree to grow " .. nLoops)
-            end
-            local nBoneMealFed = feedBoneMealUntilTree()
-            if itemInFrontHasName("log") then
-                print("Tree grew!")
-            elseif nBoneMealFed < 5 then
-                print("No bonemeal, waiting for tree to grow for " ..
-                          SLEEP_TIME .. "s")
-                os.sleep(SLEEP_TIME)
-            else
-                print("Tree didn't grow after feeding >5 bonemeal. Clearing obstructions")
-                harvestTree(TREE_HEIGHT)
-            end
-        else
-            print("No tree or sapling found. Somting wong")
-            break
         end
-        nLoops = nLoops + 1
     end
 end
 
@@ -279,7 +313,6 @@ function listenForCode()
     print("Waiting for modem_message with code to run...")
     while true do
         local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
-        
         if freq == channel then
             print("Received code")
             modem.transmit(channel, channel, "Code received", distance)
@@ -298,22 +331,18 @@ function executeCode(code)
     end
 end
 
-function main(farmLoops)
-    -- Assumes we are at sappling position
-    if itemInFrontHasName("sapling") or itemInFrontHasName("log") then
-        print("Starting tree farm")
-    elseif plantSapling() then
-        print("Sapling placed. Starting tree farm")
-    else
-        print("Sapling placement didn't work")
-        return false
-    end
-    main_loop(farmLoops)
+function becomeReceiver()
+    -- Use the equiped modem
+    local modem = peripheral.find("modem")
+    local channel = 42
+    modem.open(channel)
+
+    -- Wait until we get broadcasted code and then run the code.
+    local code = listenForCode()
+    executeCode(code)
 end
 
 customAssert(returnToStart(), "failed to return to start")
-forward(SAPPLING_DISTANCE)
 main(FARMLOOPS)
-back(SAPPLING_DISTANCE)
 print("Finished Successfully")
 becomeReceiver()
