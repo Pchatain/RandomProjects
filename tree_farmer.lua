@@ -2,7 +2,7 @@ USE_BONEMEAL = true
 CHANNEL = 42
 
 SAPPLING_DISTANCE = 3
-SLEEP_TIME = 30
+SLEEP_TIME = 5
 MIN_FUEL = 80
 TREE_HEIGHT = 7
 MAX_FORWARD = 64
@@ -12,14 +12,22 @@ FUEL_HEIGHT = 2
 SAPPLING_HEIGHT = 3
 
 -- Function to listen for code
-function listenForCode()
+function listenForCode(nonBlocking)
     print("Waiting for modem_message with code to run...")
+    print("NonBlocking = " .. tostring(nonBlocking))
+    if nonBlocking == nil then nonBlocking = false end
+    local timeout = os.startTimer(SLEEP_TIME)
     while true do
-        local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
-        if freq == CHANNEL then
+        local event, side, freq, replyChannel, message, distance = os.pullEvent()
+        if event == "modem_message" and freq == CHANNEL then
             print("Received code")
             modem.transmit(CHANNEL, CHANNEL, "Code received", distance)
             return message
+        elseif event == "timer" then
+            if nonBlocking then
+                print("No code received, continuing scheduled program")
+                return nil
+            end
         end
     end
 end
@@ -343,6 +351,7 @@ function main()
         forwardUntilObstructed()
         if treeHarvested then placeWoodInChest() end
         turnaround()
+        listenForCode(true)
     end
 end
 
