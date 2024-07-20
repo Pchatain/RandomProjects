@@ -1,4 +1,3 @@
-FARMLOOPS = 1234
 USE_BONEMEAL = true
 
 SAPPLING_DISTANCE = 2
@@ -343,6 +342,6 @@ function becomeReceiver()
 end
 
 customAssert(returnToStart(), "failed to return to start")
-main(FARMLOOPS)
+main()
 print("Finished Successfully")
 becomeReceiver()
