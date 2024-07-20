@@ -9,13 +9,13 @@ local BONE_HEIGHT = 1
 local FUEL_HEIGHT = 2
 local SAPPLING_HEIGHT = 3
 
-function endCondition()
-    -- Turtle Code
+function becomeReceiver()
+    -- Use the equiped modem
     local modem = peripheral.find("modem")
     local channel = 42
     modem.open(channel)
 
-    -- Main program
+    -- Wait until we get broadcasted code and then run the code.
     local code = listenForCode()
     executeCode(code)
 end
@@ -23,7 +23,7 @@ end
 function customAssert(condition, message)
     if not condition then
         print(message)
-        endCondition()
+        becomeReceiver()
     end
 end
 
@@ -50,9 +50,9 @@ function returnToStart()
     print("Returning to start")
     customAssert(refuel(), "User error: not enough fuel provided.")
     down(TREE_HEIGHT)
-    customAssert(turtle.detectDown(), "No ground detected espite going down.")
+    customAssert(turtle.detectDown(), "No ground detected despite going down.")
     for i = 1, 50 do
-        if isTree() or isSapling() then
+        if itemInFrontHasName("log") or itemInFrontHasName("sapling") then
             print("Found tree or sapling, turning around")
             turnaround()
         end
@@ -72,7 +72,7 @@ function returnToStart()
         end
     end
     print("Returning to Start failed!")
-    if turtle.getFuelLevel() < MIN_FUEL then
+    if turtle.getFuelLevel() == 0 then
         print("Out of Fuel!")
     end
     return false
@@ -174,15 +174,9 @@ function harvestTree(minHeight)
     back(1)
 end
 
-function isSapling()
+function itemInFrontHasName(name)
     local success, data = turtle.inspect()
-    if success then return data.name:find("sapling") end
-    return false
-end
-
-function isTree()
-    local success, data = turtle.inspect()
-    if success then return data.name:find("log") end
+    if success then return data.name:find(name) end
     return false
 end
 
@@ -202,7 +196,7 @@ function feedBoneMealUntilTree()
         if fed then
             boneFed = boneFed + 1
         end
-        if isTree() then break end
+        if itemInFrontHasName("log") then break end
         os.sleep(0.1)
     end
     return boneFed
@@ -247,7 +241,7 @@ function main_loop(farmLoops)
             print("Out of fuel, getting some from chest")
             customAssert(getItemFromChest(FUEL_HEIGHT), "failed to get fuel")
         end
-        if isTree() then
+        if itemInFrontHasName("log") then
             harvestTree()
             nTrees = nTrees + 1
             turnaround()
@@ -257,12 +251,12 @@ function main_loop(farmLoops)
             turnaround()
             forward(SAPPLING_DISTANCE)
             if nTrees < farmLoops then plantSapling() end
-        elseif isSapling() then
+        elseif itemInFrontHasName("sapling") then
             if nLoops % 30 == 0 then
                 print("Waiting for tree to grow " .. nLoops)
             end
             local nBoneMealFed = feedBoneMealUntilTree()
-            if isTree() then
+            if itemInFrontHasName("log") then
                 print("Tree grew!")
             elseif nBoneMealFed < 5 then
                 print("No bonemeal, waiting for tree to grow for " ..
@@ -280,28 +274,9 @@ function main_loop(farmLoops)
     end
 end
 
-function main(farmLoops)
-    -- Assumes we are at sappling position
-    if isSapling() or isTree() then
-        print("Starting tree farm")
-    elseif plantSapling() then
-        print("Sapling placed. Starting tree farm")
-    else
-        print("Sapling placement didn't work")
-        return false
-    end
-    main_loop(farmLoops)
-end
-
-customAssert(returnToStart(), "failed to return to start")
-forward(SAPPLING_DISTANCE)
-main(FARMLOOPS)
-back(SAPPLING_DISTANCE)
-print("Tree farmer done")
-
 -- Function to listen for code
 function listenForCode()
-    print("Listening for code...")
+    print("Waiting for modem_message with code to run...")
     while true do
         local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
         
@@ -319,8 +294,26 @@ function executeCode(code)
     if func then
         func()
     else
-        print("Error in received code, func didn't work " .. err)
+        print("Error in received code, func didn't work. Error msg = " .. err)
     end
 end
+
+function main(farmLoops)
+    -- Assumes we are at sappling position
+    if itemInFrontHasName("sapling") or itemInFrontHasName("log") then
+        print("Starting tree farm")
+    elseif plantSapling() then
+        print("Sapling placed. Starting tree farm")
+    else
+        print("Sapling placement didn't work")
+        return false
+    end
+    main_loop(farmLoops)
+end
+
+customAssert(returnToStart(), "failed to return to start")
+forward(SAPPLING_DISTANCE)
+main(FARMLOOPS)
+back(SAPPLING_DISTANCE)
 print("Finished Successfully")
-endCondition()
+becomeReceiver()
