@@ -1,4 +1,5 @@
 USE_BONEMEAL = true
+CHANNEL = 42
 
 SAPPLING_DISTANCE = 2
 SLEEP_TIME = 30
@@ -9,6 +10,39 @@ MAX_FORWARD = 64
 BONE_HEIGHT = 1
 FUEL_HEIGHT = 2
 SAPPLING_HEIGHT = 3
+
+-- Function to listen for code
+function listenForCode()
+    print("Waiting for modem_message with code to run...")
+    while true do
+        local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
+        if freq == CHANNEL then
+            print("Received code")
+            modem.transmit(CHANNEL, CHANNEL, "Code received", distance)
+            return message
+        end
+    end
+end
+
+-- Function to execute received code
+function executeCode(code)
+    local func, err = load(code)
+    if func then
+        func()
+    else
+        print("Error in received code, func didn't work. Error msg = " .. err)
+    end
+end
+
+function becomeReceiver()
+    -- Use the equiped modem
+    local modem = peripheral.find("modem")
+    modem.open(CHANNEL)
+
+    -- Wait until we get broadcasted code and then run the code.
+    local code = listenForCode()
+    executeCode(code)
+end
 
 function customAssert(condition, message)
     if not condition then
@@ -22,8 +56,8 @@ function forwardUntilObstructed(max_steps)
     -- returns number of steps moved
     local steps = 0
     if max_steps == nil then max_steps = MAX_FORWARD end
-    while not turtle.detect() and steps < max_steps do
-        turtle.forward()
+    while steps < max_steps do
+        if not turtle.forward() then break end
         if not turtle.detectDown() then
             turtle.back()
             break
@@ -187,6 +221,7 @@ function itemInFrontHasName(name)
 end
 
 function feedBoneMealUntilTree()
+    if not USE_BONEMEAL then return 0 end
     local boneMealSlot = findBonemealSlot()
     local boneFed = 0
     if boneMealSlot == 0 then
@@ -194,6 +229,8 @@ function feedBoneMealUntilTree()
         if not getItemFromChest(BONE_HEIGHT) then
             print("No bonemeal in chest")
             return 0
+        else
+            boneMealSlot = findBonemealSlot()
         end
     end
     turtle.select(boneMealSlot)
@@ -271,11 +308,11 @@ function processFarm()
         local nBoneMealFed = feedBoneMealUntilTree()
         if itemInFrontHasName("log") then
             print("Tree grew!")
-        elseif nBoneMealFed < 5 then
+        elseif USE_BONEMEAL and nBoneMealFed < 5 then
             print("Less than 5 bonemeal fed and tree didn't grow.")
             print("Since no bonemeal, turning bonemeal functionality off")
             USE_BONEMEAL = false
-        else
+        elseif USE_BONEMEAL then
             print("Tree didn't grow after feeding > 4 bonemeal. Clearing obstructions")
             harvestTree(TREE_HEIGHT)
         end
@@ -288,57 +325,24 @@ end
 function main()
     -- Assumes we are at start position
     while true do
-        steps = 1
+        local steps = 1
         treeHarvested = false
         while steps > 0 do
             steps = forwardUntilObstructed(SAPPLING_DISTANCE)
+            print("Steps: " .. steps)
             if steps == SAPPLING_DISTANCE then
-                turrtle.turnLeft()
+                turtle.turnLeft()
                 if processFarm() then treeHarvested = true end
                 turtle.turnRight()
+            else
+                break
             end
         end
-        if treeHarvested then
-            turnaround()
-            forwardUntilObstructed()
-            placeWoodInChest()
-            turnaround()
-        end
+        turnaround()
+        forwardUntilObstructed()
+        if treeHarvested then placeWoodInChest() end
+        turnaround()
     end
-end
-
--- Function to listen for code
-function listenForCode()
-    print("Waiting for modem_message with code to run...")
-    while true do
-        local event, side, freq, replyChannel, message, distance = os.pullEvent("modem_message")
-        if freq == channel then
-            print("Received code")
-            modem.transmit(channel, channel, "Code received", distance)
-            return message
-        end
-    end
-end
-
--- Function to execute received code
-function executeCode(code)
-    local func, err = load(code)
-    if func then
-        func()
-    else
-        print("Error in received code, func didn't work. Error msg = " .. err)
-    end
-end
-
-function becomeReceiver()
-    -- Use the equiped modem
-    local modem = peripheral.find("modem")
-    local channel = 42
-    modem.open(channel)
-
-    -- Wait until we get broadcasted code and then run the code.
-    local code = listenForCode()
-    executeCode(code)
 end
 
 customAssert(returnToStart(), "failed to return to start")
