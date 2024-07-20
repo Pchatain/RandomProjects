@@ -13,6 +13,8 @@ SAPPLING_HEIGHT = 3
 
 -- Function to listen for code
 function listenForCode(nonBlocking)
+    local modem = peripheral.find("modem")
+    modem.open(CHANNEL)
     print("Waiting for modem_message with code to run...")
     print("NonBlocking = " .. tostring(nonBlocking))
     if nonBlocking == nil then nonBlocking = false end
