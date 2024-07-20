@@ -70,6 +70,7 @@ function forwardUntilObstructed(max_steps)
             turtle.back()
             break
         end
+        turtle.suck()
         steps = steps + 1
     end
     return steps
