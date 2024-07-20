@@ -1,8 +1,19 @@
-shell.run("delete", "farmer.lua")
-print("deleted farmer.lua")
-shell.run("pastebin", "get", "bvnCeAaB", "farmer.lua") -- 1nLz1t5z?
-print("downloaded farmer.lua")
-local filePath = "farmer.lua"
+args = {...}
+
+farmerCode = "bvnCeAaB"
+filePath = "farmer.lua"
+
+if #args < 1 then
+    shell.run("delete", "farmer.lua")
+    print("deleted farmer.lua")
+    shell.run("pastebin", "get", farmerCode, "farmer.lua") -- 1nLz1t5z?
+    print("downloaded farmer.lua")
+elseif #args == 1 then
+    filePath = args[1]
+else
+    print("Usage: broadcast")
+end
+
 -- Computer Code
 local modem = peripheral.find("modem")
 local channel = 42
