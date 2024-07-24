@@ -29,7 +29,7 @@ def main():
     
     
     # create a new image with the shirt and short
-    new_img = Image.new("RGB", (max(shirt_img.width, short_img.width), shirt_img.height + short_img.height + 40))
+    new_img = Image.new("RGB", (max(shirt_img.width, short_img.width), shirt_img.height + short_img.height + 50))
     new_img.paste(shirt_img, (0, 0))
     new_img.paste(short_img, (0, shirt_img.height))
     
