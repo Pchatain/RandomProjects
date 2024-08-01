@@ -98,7 +98,6 @@ function returnToStart()
     customAssert(refuel(), "User error: not enough fuel provided.")
     down(TREE_HEIGHT)
     customAssert(turtle.detectDown(), "No ground detected despite going down.")
-    turtle.turnLeft() -- randomly turn left since odds are that will point us correctly
     for i = 1, 150 do
         if itemInFrontHasName("log") or itemInFrontHasName("sapling") then
             print("Found tree or sapling, turning around")
